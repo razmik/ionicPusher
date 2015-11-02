@@ -4,7 +4,8 @@ angular.module('starter.controllers', [])
     var vm = this;
     vm.username = '';
     vm.login = login;
-    
+    var ionicIoAppKey = 'a5fa8ce8';
+
     var savedUser = null;
 
     function login() {
@@ -16,18 +17,36 @@ angular.module('starter.controllers', [])
 
     function InitializeUser(username) {
       Ionic.io();
+      Ionic.User.load(username).then(successUserLoad, failureToLoadUser);
+    }
+
+    function successUserLoad(loadedUser) {
+      console.log('successfuly user loaded');
+      
+      Ionic.User.current(loadedUser);
       savedUser = Ionic.User.current();
-      if (!savedUser.id) {
-        savedUser.id = username;
-        savedUser.save().then(successUserInitialize, failedUserSave);
-      }else{
+      
+      if (!!savedUser.id) {
         successUserInitialize();
       }
     }
-    
-    function successUserInitialize(){
-      if(!!savedUser){
-        InitializePushNotifications(savedUser);        
+
+    function failureToLoadUser() {
+      console.log('failure in user loading');
+      //If user not saved in cloud, create one and save
+      //TODO: is there a way to clear registered user from localstorage? Something like Ionic.User.Clear() ?
+      
+      clearCurrentUser();
+
+      savedUser = Ionic.User.current();
+      savedUser.id = vm.username;
+      savedUser.save().then(successUserInitialize, failedUserSave);
+    }
+
+    function successUserInitialize() {
+      alert('Current saved user: ' + savedUser);
+      if (!!savedUser) {
+        InitializePushNotifications(savedUser);
         $state.go('tab.message');
       }
     }
@@ -64,8 +83,13 @@ angular.module('starter.controllers', [])
       console.log('Successfully saved the user.');
     }
 
-    function failedUserSave() {
+    function failedUserSave(err) {
       alert('Something went wrong saving the user.');
+    }
+
+    function clearCurrentUser() {
+      localStorage.removeItem('ionic_io_push_token');
+      localStorage.removeItem('ionic_io_user_' + ionicIoAppKey);
     }
 
   })
