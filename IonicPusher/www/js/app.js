@@ -11,36 +11,6 @@ angular.module('starter', ['ionic', 'ionic.service.core', 'starter.controllers',
     $ionicPlatform.ready(function () {
 
       InitializePlugins();
-      var user = InitializeUser('user_1');
-      InitializePushNotifications(user);
-
-      function InitializePushNotifications(user) {
-        var push = new Ionic.Push({
-          "debug": true,
-          "onNotification": function (notification) {
-            var payload = notification.payload;
-            console.log('onNotification: ' + notification.title + '\n' + notification.text + '\n\nPayload: ' + payload);
-            alert('onNotification: ' + notification.title + '\n' + notification.text + '\n\nPayload: ' + payload);
-          },
-          "onRegister": function (data) {
-            console.log('onRegister token: \n' + data.token);
-            alert('onRegister token: \n' + data.token);
-            user.addPushToken(data);
-            user.save().then(successUserSave, failedUserSave);
-          },
-          "pluginConfig": {
-            "ios": {
-              "badge": true,
-              "sound": true
-            },
-            "android": {
-              "iconColor": "#343434"
-            }
-          }
-        });
-
-        push.register();
-      }
 
       function InitializePlugins() {
         // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
@@ -54,25 +24,6 @@ angular.module('starter', ['ionic', 'ionic.service.core', 'starter.controllers',
           // org.apache.cordova.statusbar required
           StatusBar.styleLightContent();
         }
-      }
-
-      function InitializeUser(username) {
-        Ionic.io();
-        var user = Ionic.User.current();
-        if (!user.id) {
-          //user.id = Ionic.User.anonymousId();
-          user.id = username;
-          user.save().then(successUserSave, failedUserSave);
-        }
-        return user;
-      }
-      
-      function successUserSave(){
-        alert('Successfully saved the user.');
-      }
-
-      function failedUserSave(){
-        alert('Something went wrong saving the user.');
       }
       
     });
@@ -96,35 +47,6 @@ angular.module('starter', ['ionic', 'ionic.service.core', 'starter.controllers',
         url: '/tab',
         abstract: true,
         templateUrl: 'templates/tabs.html'
-      })
-
-      .state('tab.dash', {
-        url: '/dash',
-        views: {
-          'tab-dash': {
-            templateUrl: 'templates/tab-dash.html',
-            controller: 'DashCtrl'
-          }
-        }
-      })
-
-      .state('tab.chats', {
-        url: '/chats',
-        views: {
-          'tab-chats': {
-            templateUrl: 'templates/tab-chats.html',
-            controller: 'ChatsCtrl'
-          }
-        }
-      })
-      .state('tab.chat-detail', {
-        url: '/chats/:chatId',
-        views: {
-          'tab-chats': {
-            templateUrl: 'templates/chat-detail.html',
-            controller: 'ChatDetailCtrl'
-          }
-        }
       })
 
       .state('tab.message', {

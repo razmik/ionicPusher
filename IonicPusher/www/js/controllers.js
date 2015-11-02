@@ -3,33 +3,71 @@ angular.module('starter.controllers', [])
   .controller('LoginCtrl', function ($scope, $state, Chats) {
     var vm = this;
     vm.username = '';
-    vm.password = '';
     vm.login = login;
+    
+    var savedUser = null;
 
     function login() {
-      $state.go('tab.dash');
+
+      if (vm.username) {
+        InitializeUser(vm.username);
+      }
     }
-  })
 
-  .controller('DashCtrl', function ($scope) { })
+    function InitializeUser(username) {
+      Ionic.io();
+      savedUser = Ionic.User.current();
+      if (!savedUser.id) {
+        savedUser.id = username;
+        savedUser.save().then(successUserInitialize, failedUserSave);
+      }else{
+        successUserInitialize();
+      }
+    }
+    
+    function successUserInitialize(){
+      if(!!savedUser){
+        InitializePushNotifications(savedUser);        
+        $state.go('tab.message');
+      }
+    }
 
-  .controller('ChatsCtrl', function ($scope, Chats) {
-    // With the new view caching in Ionic, Controllers are only called
-    // when they are recreated or on app start, instead of every page change.
-    // To listen for when this page is active (for example, to refresh data),
-    // listen for the $ionicView.enter event:
-    //
-    //$scope.$on('$ionicView.enter', function(e) {
-    //});
+    function InitializePushNotifications(user) {
+      var push = new Ionic.Push({
+        "debug": true,
+        "onNotification": function (notification) {
+          var payload = notification.payload;
+          console.log('onNotification: ' + notification.title + '\n' + notification.text + '\n\nPayload: ' + payload);
+          alert('onNotification: ' + notification.title + '\n' + notification.text + '\n\nPayload: ' + payload);
+        },
+        "onRegister": function (data) {
+          console.log('onRegister token: \n' + data.token);
+          alert('onRegister token: \n' + data.token);
+          user.addPushToken(data);
+          user.save().then(successUserSave, failedUserSave);
+        },
+        "pluginConfig": {
+          "ios": {
+            "badge": true,
+            "sound": true
+          },
+          "android": {
+            "iconColor": "#343434"
+          }
+        }
+      });
 
-    $scope.chats = Chats.all();
-    $scope.remove = function (chat) {
-      Chats.remove(chat);
-    };
-  })
+      push.register();
+    }
 
-  .controller('ChatDetailCtrl', function ($scope, $stateParams, Chats) {
-    $scope.chat = Chats.get($stateParams.chatId);
+    function successUserSave() {
+      console.log('Successfully saved the user.');
+    }
+
+    function failedUserSave() {
+      alert('Something went wrong saving the user.');
+    }
+
   })
 
   .controller('MessageCtrl', function ($scope, $http) {
@@ -61,7 +99,8 @@ angular.module('starter.controllers', [])
               "priority": 10,
               "contentAvailable": true,
               "payload": {
-                "sendTo": vm.sendTo
+                "sendTo": vm.sendTo,
+                "key": 143
               }
             },
             "android": {
